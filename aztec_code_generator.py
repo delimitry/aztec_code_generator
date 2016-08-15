@@ -12,8 +12,12 @@
 
 import math
 import numbers
-import StringIO
 from PIL import Image, ImageDraw
+
+try:
+    from StringIO import StringIO
+except ImportError:
+    from io import StringIO
 
 
 table = {
@@ -64,11 +68,25 @@ polynomials = {
 }
 
 code_chars = {
-    'upper': ['P/S', ' ', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'L/L', 'M/L', 'D/L', 'B/S'],
-    'lower': ['P/S', ' ', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 'U/S', 'M/L', 'D/L', 'B/S'],
-    'mixed': ['P/S', ' ', '\x01', '\x02', '\x03', '\x04', '\x05', '\x06', '\x07', '\x08', '\t', '\n', '\x0b', '\x0c', '\r', '\x1b', '\x1c', '\x1d', '\x1e', '\x1f', '@', '\\', '^', '_', '`', '|', '~', '\x7f', 'L/L', 'U/L', 'P/L', 'B/S'],
-    'punct': ['FLG(n)', '\r', '\r\n', '. ', ', ', ': ', '!', '"', '#', '$', '%', '&', "'", '(', ')', '*', '+', ',', '-', '.', '/', ':', ';', '<', '=', '>', '?', '[', ']', '{', '}', 'U/L'],
-    'digit': ['P/S', ' ', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', ',', '.', 'U/L', 'U/S'],
+    'upper': [
+        'P/S', ' ', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S',
+        'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'L/L', 'M/L', 'D/L', 'B/S'
+    ],
+    'lower': [
+        'P/S', ' ', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's',
+        't', 'u', 'v', 'w', 'x', 'y', 'z', 'U/S', 'M/L', 'D/L', 'B/S'
+    ],
+    'mixed': [
+        'P/S', ' ', '\x01', '\x02', '\x03', '\x04', '\x05', '\x06', '\x07', '\x08', '\t', '\n', '\x0b', '\x0c', '\r',
+        '\x1b', '\x1c', '\x1d', '\x1e', '\x1f', '@', '\\', '^', '_', '`', '|', '~', '\x7f', 'L/L', 'U/L', 'P/L', 'B/S'
+    ],
+    'punct': [
+        'FLG(n)', '\r', '\r\n', '. ', ', ', ': ', '!', '"', '#', '$', '%', '&', "'", '(', ')', '*', '+', ',', '-', '.',
+        '/', ':', ';', '<', '=', '>', '?', '[', ']', '{', '}', 'U/L'
+    ],
+    'digit': [
+        'P/S', ' ', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', ',', '.', 'U/L', 'U/S'
+    ],
 }
 
 upper_chars = code_chars['upper'][1:-4]
@@ -158,18 +176,15 @@ def reed_solomon(wd, nd, nc, gf, pp):
     :param pp: prime modulus polynomial value
     """
     # generate log and anti log tables
-    log = {}
-    alog = {}
-    log[0] = 1 - gf
-    alog[0] = 1
+    log = {0: 1 - gf}
+    alog = {0: 1}
     for i in range(1, gf):
         alog[i] = alog[i - 1] * 2
         if alog[i] >= gf:
             alog[i] ^= pp
         log[alog[i]] = i
     # generate polynomial coeffs
-    c = {}
-    c[0] = 1
+    c = {0: 1}
     for i in range(1, nc + 1):
         c[i] = 0
     for i in range(1, nc + 1):
@@ -181,7 +196,7 @@ def reed_solomon(wd, nd, nc, gf, pp):
     for i in range(nd, nd + nc):
         wd[i] = 0
     for i in range(nd):
-        assert wd[i] >= 0 and wd[i] < gf
+        assert 0 <= wd[i] < gf
         k = wd[nd] ^ wd[i]
         for j in range(nc):
             wd[nd + j] = prod(k, c[nc - j - 1], log, alog, gf)
@@ -204,13 +219,7 @@ def find_optimal_sequence(data):
     cur_len = {
         'upper': 0, 'lower': E, 'mixed': E, 'punct': E, 'digit': E, 'binary': E
     }
-    next_len = {
-        'upper': 0, 'lower': 0, 'mixed': 0, 'punct': 0, 'digit': 0, 'binary': 0
-    }
     cur_seq = {
-        'upper': [], 'lower': [], 'mixed': [], 'punct': [], 'digit': [], 'binary': []
-    }
-    next_seq = {
         'upper': [], 'lower': [], 'mixed': [], 'punct': [], 'digit': [], 'binary': []
     }
     prev_c = ''
@@ -469,7 +478,7 @@ class AztecCode(object):
         self.matrix = []
         for _ in range(self.size):
             line = []
-            for _ in range(self.size):
+            for __ in range(self.size):
                 line.append(' ')
             self.matrix.append(line)
 
@@ -593,7 +602,9 @@ class AztecCode(object):
         center = self.size // 2
         ring_radius = 5 if self.compact else 7
         side_size = 7 if self.compact else 11
-        bits_stream = StringIO.StringIO(mode_data_bits)
+        bits_stream = StringIO(mode_data_bits)
+        x = 0
+        y = 0
         index = 0
         while True:
             # for full mode take a reference grid into account

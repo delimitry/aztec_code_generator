@@ -772,7 +772,7 @@ def main():
     aztec_code = AztecCode(data)
     aztec_code.print_out()
     if ImageDraw is None:
-        print 'PIL is not installed, cannot generate PNG'
+        print('PIL is not installed, cannot generate PNG')
     else:
         aztec_code.save('aztec_code.png', 4)
     print('Aztec Code info: {0}x{0} {1}'.format(aztec_code.size, '(compact)' if aztec_code.compact else ''))

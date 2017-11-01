@@ -452,6 +452,26 @@ def get_config_from_table(size, compact):
         raise Exception('Failed to find config with size and compactness flag')
     return config
 
+def find_suitable_matrix_size(data):
+    """ Find suitable matrix size
+    Raise an exception if suitable size is not found
+
+    :param data: data to encode
+    :return: (size, compact) tuple
+    """
+    optimal_sequence = find_optimal_sequence(data)
+    out_bits = optimal_sequence_to_bits(optimal_sequence)
+    for (size, compact) in sorted(table.keys()):
+        config = get_config_from_table(size, compact)
+        bits = config.get('bits')
+        # error correction percent
+        ec_percent = 23  # recommended: 23% of symbol capacity plus 3 codewords
+        # calculate minimum required number of bits
+        required_bits_count = int(math.ceil(len(out_bits) * 100.0 / (
+            100 - ec_percent) + 3 * 100.0 / (100 - ec_percent)))
+        if required_bits_count < bits:
+            return size, compact
+    raise Exception('Data too big to fit in one Aztec code!')
 
 class AztecCode(object):
     """
@@ -475,7 +495,7 @@ class AztecCode(object):
                 raise Exception(
                     'Given size and compact values (%s, %s) are not found in sizes table!' % (size, compact))
         else:
-            self.size, self.compact = self.__find_suitable_matrix_size()
+            self.size, self.compact = find_suitable_matrix_size(self.data)
         self.__create_matrix()
         self.__encode_data()
 
@@ -510,26 +530,6 @@ class AztecCode(object):
         """ Print out Aztec code matrix """
         for line in self.matrix:
             print(''.join(x for x in line))
-
-    def __find_suitable_matrix_size(self):
-        """ Find suitable matrix size
-        Raise an exception if suitable size is not found
-
-        :return: (size, compact) tuple
-        """
-        optimal_sequence = find_optimal_sequence(self.data)
-        out_bits = optimal_sequence_to_bits(optimal_sequence)
-        for (size, compact) in sorted(table.keys()):
-            config = get_config_from_table(size, compact)
-            bits = config.get('bits')
-            # error correction percent
-            ec_percent = 23  # recommended
-            # calculate minimum required number of bits
-            required_bits_count = int(math.ceil(len(out_bits) * 100.0 / (
-                100 - ec_percent) + 3 * 100.0 / (100 - ec_percent)))
-            if required_bits_count < bits:
-                return size, compact
-        raise Exception('Data too big to fit in one Aztec code!')
 
     def __add_finder_pattern(self):
         """ Add bulls-eye finder pattern """

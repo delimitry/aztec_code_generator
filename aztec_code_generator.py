@@ -12,7 +12,13 @@
 
 import math
 import numbers
-from PIL import Image, ImageDraw
+import sys
+
+try:
+    from PIL import Image, ImageDraw
+except ImportError:
+    Image = ImageDraw = None
+    missing_pil = sys.exc_info()
 
 try:
     from StringIO import StringIO
@@ -488,6 +494,8 @@ class AztecCode(object):
         :param filename: output image filename.
         :param module_size: barcode module size in pixels.
         """
+        if ImageDraw is None:
+            raise missing_pil[0], missing_pil[1], missing_pil[2]
         image = Image.new('RGB', (self.size * module_size, self.size * module_size), 'white')
         image_draw = ImageDraw.Draw(image)
         for y in range(self.size):
@@ -763,7 +771,10 @@ def main():
     data = 'Aztec Code 2D :)'
     aztec_code = AztecCode(data)
     aztec_code.print_out()
-    aztec_code.save('aztec_code.png', 4)
+    if ImageDraw is None:
+        print 'PIL is not installed, cannot generate PNG'
+    else:
+        aztec_code.save('aztec_code.png', 4)
     print('Aztec Code info: {0}x{0} {1}'.format(aztec_code.size, '(compact)' if aztec_code.compact else ''))
 
 

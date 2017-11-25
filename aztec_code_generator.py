@@ -515,7 +515,9 @@ class AztecCode(object):
         :param module_size: barcode module size in pixels.
         """
         if ImageDraw is None:
-            raise missing_pil[0], missing_pil[1], missing_pil[2]
+            exc = missing_pil[0](missing_pil[1])
+            exc.__traceback__ = missing_pil[2]
+            raise exc
         image = Image.new('RGB', (self.size * module_size, self.size * module_size), 'white')
         image_draw = ImageDraw.Draw(image)
         for y in range(self.size):

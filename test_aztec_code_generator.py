@@ -56,6 +56,18 @@ class Test(unittest.TestCase):
         self.assertEqual(find_optimal_sequence('Abc-123X!Abc-123X!'), [
             'A', 'L/L', 'b', 'c', 'D/L', 'P/S', '-', '1', '2', '3', 'U/L', 'X', 'P/S', '!',
             'A', 'L/L', 'b', 'c', 'D/L', 'P/S', '-', '1', '2', '3', 'U/S', 'X', 'P/S', '!'])
+        self.assertEqual(find_optimal_sequence('ABCabc1a2b3e'), [
+            'A', 'B', 'C', 'L/L', 'a', 'b', 'c', 'B/S', 5, '1', 'a', '2', 'b', '3', 'e'])
+        self.assertEqual(find_optimal_sequence('ABCabc1a2b3eBC'), [
+            'A', 'B', 'C', 'L/L', 'a', 'b', 'c', 'B/S', 6, '1', 'a', '2', 'b', '3', 'e', 'M/L', 'U/L', 'B', 'C'])
+        self.assertEqual(find_optimal_sequence('0a|5Tf.l'), [
+            'D/L', '0', 'U/L', 'L/L', 'a', 'M/L', '|', 'U/L', 'D/L', '5', 'U/L', 'L/L', 'U/S', 'T', 'f', 'P/S', '.', 'l'])
+        self.assertEqual(find_optimal_sequence('*V1\x0c {Pa'), [
+            'P/S', '*', 'V', 'B/S', 2, '1', '\x0c', ' ', 'P/S', '{', 'P', 'L/L', 'a'])
+        self.assertEqual(find_optimal_sequence('~Fxlb"I4'), [
+            'M/L', '~', 'U/L', 'D/L', 'U/S', 'F', 'U/L', 'L/L', 'x', 'l', 'b', 'D/L', 'P/S', '"', 'U/S', 'I', '4'])
+        self.assertEqual(find_optimal_sequence('\\+=R?1'), [
+            'M/L', '\\', 'P/L', '+', '=', 'U/L', 'R', 'D/L', 'P/S', '?', '1'])
 
     def test_optimal_sequence_to_bits(self):
         """ Test optimal_sequence_to_bits function """

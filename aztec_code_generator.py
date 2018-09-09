@@ -6,7 +6,7 @@
 
     Aztec code generator.
 
-    :copyright: (c) 2016 by Dmitry Alimov.
+    :copyright: (c) 2016-2018 by Dmitry Alimov.
     :license: The MIT License (MIT), see LICENSE for more details.
 """
 
@@ -250,22 +250,46 @@ def find_optimal_sequence(data):
                             # TODO: update for digit
                             if x in ['punct', 'digit'] and y != 'upper':
                                 cur_seq[y] = cur_seq[x] + ['resume', 'U/L', '%s/L' % y.upper()[0]]
+                                back_to[y] = y
                             elif x in ['upper', 'lower'] and y == 'punct':
                                 cur_seq[y] = cur_seq[x] + ['M/L', '%s/L' % y.upper()[0]]
-                            elif x in ['binary'] and y == 'punct':
-                                cur_seq[y] = cur_seq[x] + ['resume', 'M/L', '%s/L' % y.upper()[0]]
+                                back_to[y] = y
+                            elif x == 'mixed' and y != 'upper':
+                                if y == 'punct':
+                                    cur_seq[y] = cur_seq[x] + ['P/L']
+                                    back_to[y] = 'punct'
+                                else:
+                                    cur_seq[y] = cur_seq[x] + ['U/L', 'D/L']
+                                    back_to[y] = 'digit'
+                                continue
                             else:
-                                cur_seq[y] = cur_seq[x] + ['resume', '%s/L' % y.upper()[0]]
+                                if x == 'binary':
+                                    # TODO: review this
+                                    if y == back_to[x]:
+                                        # when return from binary to previous mode, skip mode change
+                                        cur_seq[y] = cur_seq[x] + ['resume']
+                                    elif y == 'punct':
+                                        cur_seq[y] = cur_seq[x] + ['resume', 'M/L', 'P/L']
+                                        back_to[y] = 'punct'
+                                    elif y == 'upper' and back_to[x] == 'lower':
+                                        # when return from binary back to lower and then to upper
+                                        cur_seq[y] = cur_seq[x] + ['resume', 'M/L', 'U/L']
+                                        back_to[y] = 'upper'
+                                else:
+                                    cur_seq[y] = cur_seq[x] + ['resume', '%s/L' % y.upper()[0]]
+                                    back_to[y] = y
                         else:
                             # if changing from punct or digit mode - use U/L as intermediate mode
                             # TODO: update for digit
                             if x in ['punct', 'digit']:
                                 cur_seq[y] = cur_seq[x] + ['U/L', '%s/L' % y.upper()[0]]
+                                back_to[y] = y
                             elif x in ['binary', 'upper', 'lower'] and y == 'punct':
                                 cur_seq[y] = cur_seq[x] + ['M/L', '%s/L' % y.upper()[0]]
+                                back_to[y] = y
                             else:
                                 cur_seq[y] = cur_seq[x] + ['%s/L' % y.upper()[0]]
-                        back_to[y] = x
+                                back_to[y] = y
         next_len = {
             'upper': E, 'lower': E, 'mixed': E, 'punct': E, 'digit': E, 'binary': E
         }
@@ -285,6 +309,12 @@ def find_optimal_sequence(data):
             possible_modes.append('digit')
         possible_modes.append('binary')
         for x in possible_modes:
+            # TODO: review this!
+            if back_to[x] == 'digit' and x == 'lower':
+                cur_seq[x] = cur_seq[x] +  ['U/L', 'L/L']
+                cur_len[x] = cur_len[x] + latch_len[back_to[x]][x]
+                back_to[x] = 'lower'
+            # add char to current sequence
             if cur_len[x] + char_size[x] < next_len[x]:
                 next_len[x] = cur_len[x] + char_size[x]
                 next_seq[x] = cur_seq[x] + [c]
@@ -331,7 +361,7 @@ def find_optimal_sequence(data):
             reset_pos = result_seq_len - i - 2
     for size_pos in sizes:
         result_seq[len(result_seq) - size_pos - 1] = sizes[size_pos]
-    # remove 'reset' tokens
+    # remove 'resume' tokens
     result_seq = [x for x in result_seq if x != 'resume']
     # update binary sequences' extra sizes
     updated_result_seq = []
@@ -402,6 +432,7 @@ def optimal_sequence_to_bits(optimal_sequence):
                 out_bits += bin(seq_len)[2:].zfill(11)
                 binary_seq_len = seq_len
             binary = True
+            binary_index = 0
         # update previous mode
         if not shift:
             prev_mode = mode

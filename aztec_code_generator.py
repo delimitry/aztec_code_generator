@@ -265,16 +265,34 @@ def find_optimal_sequence(data):
                             else:
                                 if x == 'binary':
                                     # TODO: review this
+                                    # Reviewed by jravallec
                                     if y == back_to[x]:
                                         # when return from binary to previous mode, skip mode change
                                         cur_seq[y] = cur_seq[x] + ['resume']
-                                    elif y == 'punct':
-                                        cur_seq[y] = cur_seq[x] + ['resume', 'M/L', 'P/L']
-                                        back_to[y] = 'punct'
-                                    elif y == 'upper' and back_to[x] == 'lower':
-                                        # when return from binary back to lower and then to upper
-                                        cur_seq[y] = cur_seq[x] + ['resume', 'M/L', 'U/L']
+                                    elif y == 'upper':
+                                        if back_to[x] == 'lower':
+                                            cur_seq[y] = cur_seq[x] + ['resume', 'M/L', 'U/L']
+                                        if back_to[x] == 'mixed':
+                                            cur_seq[y] = cur_seq[x] + ['resume', 'U/L']
                                         back_to[y] = 'upper'
+                                    elif y == 'lower':
+                                        cur_seq[y] = cur_seq[x] + ['resume', 'L/L']
+                                        back_to[y] = 'lower'
+                                    elif y == 'mixed':
+                                        cur_seq[y] = cur_seq[x] + ['resume', 'M/L']
+                                        back_to[y] = 'mixed'
+                                    elif y == 'punct':
+                                        if back_to[x] == 'mixed':
+                                            cur_seq[y] = cur_seq[x] + ['resume', 'P/L']
+                                        else:
+                                            cur_seq[y] = cur_seq[x] + ['resume', 'M/L', 'P/L']
+                                        back_to[y] = 'punct'
+                                    elif y == 'digit':
+                                        if back_to[x] == 'mixed':
+                                            cur_seq[y] = cur_seq[x] + ['resume', 'U/L', 'D/L']
+                                        else:
+                                            cur_seq[y] = cur_seq[x] + ['resume', 'D/L']
+                                        back_to[y] = 'digit'
                                 else:
                                     cur_seq[y] = cur_seq[x] + ['resume', '%s/L' % y.upper()[0]]
                                     back_to[y] = y
@@ -365,13 +383,21 @@ def find_optimal_sequence(data):
     result_seq = [x for x in result_seq if x != 'resume']
     # update binary sequences' extra sizes
     updated_result_seq = []
+    is_binary_length = True
     for i, c in enumerate(result_seq):
-        if c == 'B/S':
-            if result_seq[i + 1] > 31:
-                updated_result_seq.append(c)
+        if is_binary_length:
+            if c > 31:
                 updated_result_seq.append(0)
-                continue
-        updated_result_seq.append(c)
+                updated_result_seq.append(c - 31)
+            else:
+                updated_result_seq.append(c)
+            is_binary_length = False
+        else:
+            updated_result_seq.append(c)
+
+        if c == 'B/S':
+            is_binary_length = True
+            
     return updated_result_seq
 
 
@@ -430,7 +456,7 @@ def optimal_sequence_to_bits(optimal_sequence):
                 if not isinstance(seq_len, numbers.Number):
                     raise Exception('Binary sequence length must be a number')
                 out_bits += bin(seq_len)[2:].zfill(11)
-                binary_seq_len = seq_len
+                binary_seq_len = seq_len + 31
             binary = True
             binary_index = 0
         # update previous mode

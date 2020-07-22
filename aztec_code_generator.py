@@ -383,7 +383,7 @@ def find_optimal_sequence(data):
     result_seq = [x for x in result_seq if x != 'resume']
     # update binary sequences' extra sizes
     updated_result_seq = []
-    is_binary_length = True
+    is_binary_length = False
     for i, c in enumerate(result_seq):
         if is_binary_length:
             if c > 31:

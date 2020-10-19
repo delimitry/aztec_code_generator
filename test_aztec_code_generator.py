@@ -39,7 +39,7 @@ class Test(unittest.TestCase):
             'C', 'L/L', 'o', 'd', 'e', 'D/L', ' ', '2', 'U/S', 'D', 'P/S', '!'])
         self.assertEqual(find_optimal_sequence('a\xff'), ['B/S', 2, 'a', '\xff'])
         self.assertEqual(find_optimal_sequence('a' + '\xff' * 30), ['B/S', 31, 'a'] + ['\xff'] * 30)
-        self.assertEqual(find_optimal_sequence('a' + '\xff' * 31), ['B/S', 0, 32, 'a'] + ['\xff'] * 31)
+        self.assertEqual(find_optimal_sequence('a' + '\xff' * 31), ['B/S', 0, 1, 'a'] + ['\xff'] * 31)
         self.assertEqual(find_optimal_sequence('!#$%&?'), ['M/L', 'P/L', '!', '#', '$', '%', '&', '?'])
         self.assertEqual(find_optimal_sequence('!#$%&?\xff'), [
             'M/L', 'P/L', '!', '#', '$', '%', '&', '?', 'U/L', 'B/S', 1, '\xff'])
@@ -61,12 +61,11 @@ class Test(unittest.TestCase):
         self.assertEqual(find_optimal_sequence('ABCabc1a2b3eBC'), [
             'A', 'B', 'C', 'L/L', 'a', 'b', 'c', 'B/S', 6, '1', 'a', '2', 'b', '3', 'e', 'M/L', 'U/L', 'B', 'C'])
         self.assertEqual(find_optimal_sequence('0a|5Tf.l'), [
-            'D/L', '0', 'U/L', 'L/L', 'a', 'M/L', '|', 'U/L',
-            'D/L', '5', 'U/L', 'L/L', 'U/S', 'T', 'f', 'P/S', '.', 'l'])
+            'B/S', 5, '0', 'a', '|', '5', 'T', 'L/L', 'f', 'P/S', '.', 'l'])
         self.assertEqual(find_optimal_sequence('*V1\x0c {Pa'), [
-            'P/S', '*', 'V', 'B/S', 2, '1', '\x0c', ' ', 'P/S', '{', 'P', 'L/L', 'a'])
+            'P/S', '*', 'V', 'B/S', 5, '1', '\x0c', ' ', '{', 'P', 'L/L', 'a'])
         self.assertEqual(find_optimal_sequence('~Fxlb"I4'), [
-            'M/L', '~', 'U/L', 'D/L', 'U/S', 'F', 'U/L', 'L/L', 'x', 'l', 'b', 'D/L', 'P/S', '"', 'U/S', 'I', '4'])
+            'B/S', 7, '~', 'F', 'x', 'l', 'b', '"', 'I', 'D/L', '4'])
         self.assertEqual(find_optimal_sequence('\\+=R?1'), [
             'M/L', '\\', 'P/L', '+', '=', 'U/L', 'R', 'D/L', 'P/S', '?', '1'])
 

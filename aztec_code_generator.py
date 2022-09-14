@@ -1,12 +1,12 @@
 #!/usr/bin/env python
-#-*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 """
     aztec_code_generator
     ~~~~~~~~~~~~~~~~~~~~
 
     Aztec code generator.
 
-    :copyright: (c) 2016-2018 by Dmitry Alimov.
+    :copyright: (c) 2016-2022 by Dmitry Alimov.
     :license: The MIT License (MIT), see LICENSE for more details.
 """
 
@@ -24,7 +24,6 @@ try:
     from StringIO import StringIO
 except ImportError:
     from io import StringIO
-
 
 table = {
     (15, True): {'layers': 1, 'codewords': 17, 'cw_bits': 6, 'bits': 102, 'digits': 13, 'text': 12, 'bytes': 6},
@@ -160,14 +159,14 @@ abbr_modes = {
 
 
 def prod(x, y, log, alog, gf):
-    """ Product x times y """
+    """Product x times y."""
     if not x or not y:
         return 0
     return alog[(log[x] + log[y]) % (gf - 1)]
 
 
 def reed_solomon(wd, nd, nc, gf, pp):
-    """ Calculate error correction codewords
+    """Calculate error correction codewords.
 
     Algorithm is based on Aztec Code bar code symbology specification from
     GOST-R-ISO-MEK-24778-2010 (Russian)
@@ -175,11 +174,13 @@ def reed_solomon(wd, nd, nc, gf, pp):
     codewords, all within GF(gf) where ``gf`` is a power of 2 and ``pp``
     is the value of its prime modulus polynomial.
 
-    :param wd: data codewords (in/out param)
-    :param nd: number of data codewords
-    :param nc: number of error correction codewords
-    :param gf: Galois Field order
-    :param pp: prime modulus polynomial value
+    :param list[int] wd: Data codewords (in/out param).
+    :param int nd: Number of data codewords.
+    :param int nc: Number of error correction codewords.
+    :param int gf: Galois Field order.
+    :param int pp: Prime modulus polynomial value.
+    
+    :return: None.
     """
     # generate log and anti log tables
     log = {0: 1 - gf}
@@ -189,7 +190,7 @@ def reed_solomon(wd, nd, nc, gf, pp):
         if alog[i] >= gf:
             alog[i] ^= pp
         log[alog[i]] = i
-    # generate polynomial coeffs
+    # generate polynomial coefficients
     c = {0: 1}
     for i in range(1, nc + 1):
         c[i] = 0
@@ -211,12 +212,13 @@ def reed_solomon(wd, nd, nc, gf, pp):
 
 
 def find_optimal_sequence(data):
-    """ Find optimal sequence, i.e. with minimum number of bits to encode data.
+    """Find optimal sequence, i.e. with minimum number of bits to encode data.
 
     TODO: add support of FLG(n) processing
 
-    :param data: data to encode
-    :return: optimal sequence
+    :param list[str|int] data: Data to encode.
+
+    :return: Optimal sequence.
     """
     back_to = {
         'upper': 'upper', 'lower': 'upper', 'mixed': 'upper',
@@ -329,7 +331,7 @@ def find_optimal_sequence(data):
         for x in possible_modes:
             # TODO: review this!
             if back_to[x] == 'digit' and x == 'lower':
-                cur_seq[x] = cur_seq[x] +  ['U/L', 'L/L']
+                cur_seq[x] = cur_seq[x] + ['U/L', 'L/L']
                 cur_len[x] = cur_len[x] + latch_len[back_to[x]][x]
                 back_to[x] = 'lower'
             # add char to current sequence
@@ -351,7 +353,8 @@ def find_optimal_sequence(data):
                         last_mode = abbr_modes.get(char.replace('/S', '').replace('/L', ''))
                         break
                 if last_mode == 'punct':
-                    if cur_seq[x][-1] + c in punct_2_chars:
+                    # do not use mixed mode for '\r\n' as in mixed mode '\r' and '\n' are separate
+                    if cur_seq[x][-1] + c in punct_2_chars and x != 'mixed':
                         if cur_len[x] < next_len[x]:
                             next_len[x] = cur_len[x]
                             next_seq[x] = cur_seq[x][:-1] + [cur_seq[x][-1] + c]
@@ -397,15 +400,16 @@ def find_optimal_sequence(data):
 
         if c == 'B/S':
             is_binary_length = True
-            
+
     return updated_result_seq
 
 
 def optimal_sequence_to_bits(optimal_sequence):
-    """ Convert optimal sequence to bits
+    """Convert optimal sequence to bits.
 
-    :param optimal_sequence: input optimal sequence
-    :return: string with bits
+    :param list[str|int] optimal_sequence: Input optimal sequence.
+
+    :return: String with bits.
     """
     out_bits = ''
     mode = 'upper'
@@ -466,12 +470,13 @@ def optimal_sequence_to_bits(optimal_sequence):
 
 
 def get_data_codewords(bits, codeword_size):
-    """ Get codewords stream from data bits sequence
-    Bit stuffing and padding are used to avoid all-zero and all-ones codewords
+    """Get codewords stream from data bits sequence.
+    Bit stuffing and padding are used to avoid all-zero and all-ones codewords.
 
-    :param bits: input data bits
-    :param codeword_size: codeword size in bits
-    :return: data codewords
+    :param str bits: Input data bits.
+    :param int codeword_size: Codeword size in bits.
+    
+    :return: Data codewords.
     """
     codewords = []
     sub_bits = ''
@@ -498,23 +503,26 @@ def get_data_codewords(bits, codeword_size):
 
 
 def get_config_from_table(size, compact):
-    """ Get config from table with given size and compactness flag
+    """Get config from table with given size and compactness flag.
 
-    :param size: matrix size
-    :param compact: compactness flag
-    :return: dict with config
+    :param int size: Matrix size.
+    :param bool compact: Compactness flag.
+
+    :return: Dict with config.
     """
     config = table.get((size, compact))
     if not config:
         raise Exception('Failed to find config with size and compactness flag')
     return config
 
-def find_suitable_matrix_size(data):
-    """ Find suitable matrix size
-    Raise an exception if suitable size is not found
 
-    :param data: data to encode
-    :return: (size, compact) tuple
+def find_suitable_matrix_size(data):
+    """Find suitable matrix size.
+    Raise an exception if suitable size is not found.
+
+    :param list[str|int] data: Data to encode.
+
+    :return: (size, compact) tuple.
     """
     optimal_sequence = find_optimal_sequence(data)
     out_bits = optimal_sequence_to_bits(optimal_sequence)
@@ -525,24 +533,25 @@ def find_suitable_matrix_size(data):
         ec_percent = 23  # recommended: 23% of symbol capacity plus 3 codewords
         # calculate minimum required number of bits
         required_bits_count = int(math.ceil(len(out_bits) * 100.0 / (
-            100 - ec_percent) + 3 * 100.0 / (100 - ec_percent)))
+                100 - ec_percent) + 3 * 100.0 / (100 - ec_percent)))
         if required_bits_count < bits:
             return size, compact
     raise Exception('Data too big to fit in one Aztec code!')
 
+
 class AztecCode(object):
     """
-    Aztec code generator
+    Aztec code generator.
     """
 
     def __init__(self, data, size=None, compact=None):
-        """ Create Aztec code with given data.
+        """Create Aztec code with given data.
         If size and compact parameters are None (by default), an
         optimal size and compactness calculated based on the data.
 
-        :param data: data to encode
-        :param size: size of matrix
-        :param compact: compactness flag
+        :param data: Data to encode.
+        :param int|None size: Size of matrix.
+        :param bool|None compact: Compactness flag.
         """
         self.data = data
         if size is not None and compact is not None:
@@ -557,7 +566,7 @@ class AztecCode(object):
         self.__encode_data()
 
     def __create_matrix(self):
-        """ Create Aztec code matrix with given size """
+        """Create Aztec code matrix with given size."""
         self.matrix = []
         for _ in range(self.size):
             line = []
@@ -566,10 +575,12 @@ class AztecCode(object):
             self.matrix.append(line)
 
     def save(self, filename, module_size=1):
-        """ Save matrix to image file
+        """Save matrix to image file.
 
-        :param filename: output image filename.
-        :param module_size: barcode module size in pixels.
+        :param str filename: Output image filename.
+        :param int module_size: Barcode module size in pixels.
+
+        :return: None.
         """
         if ImageDraw is None:
             exc = missing_pil[0](missing_pil[1])
@@ -586,12 +597,12 @@ class AztecCode(object):
         image.save(filename)
 
     def print_out(self):
-        """ Print out Aztec code matrix """
+        """Print out Aztec code matrix."""
         for line in self.matrix:
             print(''.join(x for x in line))
 
     def __add_finder_pattern(self):
-        """ Add bulls-eye finder pattern """
+        """Add bulls-eye finder pattern."""
         center = self.size // 2
         ring_radius = 5 if self.compact else 7
         for x in range(-ring_radius, ring_radius):
@@ -600,7 +611,7 @@ class AztecCode(object):
                     self.matrix[center + y][center + x] = '#'
 
     def __add_orientation_marks(self):
-        """ Add orientation marks to matrix """
+        """Add orientation marks to matrix."""
         center = self.size // 2
         ring_radius = 5 if self.compact else 7
         # add orientation marks
@@ -615,7 +626,7 @@ class AztecCode(object):
         self.matrix[center + ring_radius - 1][center + ring_radius + 0] = '#'
 
     def __add_reference_grid(self):
-        """ Add reference grid to matrix """
+        """Add reference grid to matrix."""
         if self.compact:
             return
         center = self.size // 2
@@ -631,11 +642,12 @@ class AztecCode(object):
                     self.matrix[center + y][center + x] = val
 
     def __get_mode_message(self, layers_count, data_cw_count):
-        """ Get mode message
+        """Get mode message.
 
-        :param layers_count: number of layers
-        :param data_cw_count: number of data codewords
-        :return: mode message codewords
+        :param int layers_count: Number of layers.
+        :param int data_cw_count: Number of data codewords.
+
+        :return: Mode message codewords.
         """
         if self.compact:
             # for compact mode - 2 bits with layers count and 6 bits with data codewords count
@@ -657,9 +669,11 @@ class AztecCode(object):
         return codewords
 
     def __add_mode_info(self, data_cw_count):
-        """ Add mode info to matrix
+        """Add mode info to matrix.
 
-        :param data_cw_count: number of data codewords.
+        :param int data_cw_count: Number of data codewords.
+
+        :return: None.
         """
         config = get_config_from_table(self.size, self.compact)
         layers_count = config.get('layers')
@@ -704,10 +718,11 @@ class AztecCode(object):
             index += 1
 
     def __add_data(self, data):
-        """ Add data to encode to the matrix
+        """Add data to encode to the matrix.
 
-        :param data: data to encode
-        :return: number of data codewords
+        :param list[str|int] data: data to encode.
+
+        :return: number of data codewords.
         """
         optimal_sequence = find_optimal_sequence(data)
         out_bits = optimal_sequence_to_bits(optimal_sequence)
@@ -721,7 +736,7 @@ class AztecCode(object):
         ec_percent = 23  # recommended
         # calculate minimum required number of bits
         required_bits_count = int(math.ceil(len(out_bits) * 100.0 / (
-            100 - ec_percent) + 3 * 100.0 / (100 - ec_percent)))
+                100 - ec_percent) + 3 * 100.0 / (100 - ec_percent)))
         data_codewords = get_data_codewords(out_bits, cw_bits)
         if required_bits_count > bits:
             raise Exception('Data too big to fit in Aztec code with current size!')
@@ -818,7 +833,7 @@ class AztecCode(object):
         return data_cw_count
 
     def __encode_data(self):
-        """ Encode data """
+        """Encode data."""
         self.__add_finder_pattern()
         self.__add_orientation_marks()
         self.__add_reference_grid()

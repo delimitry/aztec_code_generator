@@ -867,8 +867,8 @@ class AztecCode(object):
         while myfont.getsize(text)[0] < img_fraction*base.size[0]:
             fontsize += 1
             myfont = ImageFont.truetype(self.my_font,fontsize)
-        # reduce the font size by 1 if the module size < 4
-        # reality is anything smaller than 4 will not turn out as expected but 
+        # reduce the font size by 1 if the module size == 4
+        # reality is anything smaller than 4 will not turn out as expected.
         if module_size == 4:
             fontsize -= 1
             myfont = ImageFont.truetype(self.my_font,fontsize)

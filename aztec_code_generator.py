@@ -15,7 +15,7 @@ import numbers
 import sys
 
 try:
-    from PIL import Image, ImageDraw
+    from PIL import Image, ImageDraw, ImageFont
 except ImportError:
     Image = ImageDraw = None
     missing_pil = sys.exc_info()
@@ -544,7 +544,7 @@ class AztecCode(object):
     Aztec code generator.
     """
 
-    def __init__(self, data, size=None, compact=None):
+    def __init__(self, data, fontfile=None, size=None, compact=None):
         """Create Aztec code with given data.
         If size and compact parameters are None (by default), an
         optimal size and compactness calculated based on the data.
@@ -553,6 +553,7 @@ class AztecCode(object):
         :param int|None size: Size of matrix.
         :param bool|None compact: Compactness flag.
         """
+        self.my_font = fontfile
         self.data = data
         if size is not None and compact is not None:
             if (size, compact) in table:
@@ -594,6 +595,13 @@ class AztecCode(object):
                     (x * module_size, y * module_size,
                      x * module_size + module_size, y * module_size + module_size),
                     fill=(0, 0, 0) if self.matrix[y][x] == '#' else (255, 255, 255))
+        if self.my_font != None:
+            try:
+                image = self.add_text(image, self.data, module_size)
+            except OSError as e:
+                print(e)
+                exit()
+
         image.save(filename)
 
     def print_out(self):
@@ -840,9 +848,64 @@ class AztecCode(object):
         data_cw_count = self.__add_data(self.data)
         self.__add_mode_info(data_cw_count)
 
+    def add_text(self, img_obj, text, module_size = 4):
+        """
+            this method will add a single line of text to the top
+            of the aztec code. it is scaled to 90% of the area,
+            smaller images such as module size 4 do not scale properly.(on the list to fix)
+            However it is still functional.
+        """
+        fontsize = 1
+        img_fraction = .90
+
+        aztec_size = img_obj.size
+        #temporary image to get base dimensions for new image
+        base = Image.new('RGB', (aztec_size[0]+10, (aztec_size[1]+5)+fontsize+10), 'black')
+        new_image_size = base.size
+        myfont = ImageFont.truetype(self.my_font,fontsize)
+        #loop over font size and increase by 1 untill we reach 90% approximately
+        while myfont.getsize(text)[0] < img_fraction*base.size[0]:
+            fontsize += 1
+            myfont = ImageFont.truetype(self.my_font,fontsize)
+        # reduce the font size by 1 if the module size < 4
+        # reality is anything smaller than 4 will not turn out as expected but 
+        if module_size == 4:
+            fontsize -= 1
+            myfont = ImageFont.truetype(self.my_font,fontsize)
+
+            #TODO redo the math on text placement and scaling
+            #pil likes to operate from the top left so I let run with it for now
+        # create our new image and scale the height based on our new font size
+        image = Image.new('RGB', (aztec_size[0]+10, (aztec_size[1]+5)+fontsize+10), 'white')
+        new_image_size = image.size
+        draw = ImageDraw.Draw(image)
+        # draw our text on our new image this math can be redone but its functional
+        draw.text((((aztec_size[0]/2+5)),(new_image_size[1] - aztec_size[1]-(fontsize/2)-15)),text, font=myfont, fill='black', anchor='mm')
+        #copy the aztec code and store it
+        temp = img_obj.copy()
+        # simple math to place the aztec code at the bottom of our new image 
+        # with a 5px border on the sides and across the bottom
+        w1 = (new_image_size[0] - aztec_size[0]-5)
+        h1 = ((new_image_size[1]) - aztec_size[1]-5)
+        #paste the aztec code
+        image.paste(temp,(w1, h1))
+        #return our new image object
+        return image
+
 
 def main():
+    """
+        Font was downloaded from: https://fonts.google.com/specimen/Roboto+Flex?query=Roboto
+        module size 4 results in a 1.056 sq. in. or 76x76 pixel aztec code with out text
+        with text it results in a W 1.194 x H 1.375 or 86x99 pixels aztec code.
+        When using a font file if you see :
+        
+        `cannot open resource`
+        
+        check that the path to your font file is correct
+    """
     data = 'Aztec Code 2D :)'
+    #aztec_code = AztecCode(data, fontfile='font/RobotoFlex-VariableFont_GRAD,XTRA,YOPQ,YTAS,YTDE,YTFI,YTLC,YTUC,opsz,slnt,wdth,wght.ttf')
     aztec_code = AztecCode(data)
     aztec_code.print_out()
     if ImageDraw is None:
@@ -850,6 +913,7 @@ def main():
     else:
         aztec_code.save('aztec_code.png', 4)
     print('Aztec Code info: {0}x{0} {1}'.format(aztec_code.size, '(compact)' if aztec_code.compact else ''))
+    print("To add text to the top of the aztec code simply add a font file:\naztec_code = AztecCode(data,fontfile='path/to/your/font.ttf')")
 
 
 if __name__ == '__main__':

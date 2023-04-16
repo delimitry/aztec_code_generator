@@ -548,8 +548,10 @@ class AztecCode(object):
         """Create Aztec code with given data.
         If size and compact parameters are None (by default), an
         optimal size and compactness calculated based on the data.
-
+        If you supply a fontfile the Aztec code will have text added to it
+        
         :param data: Data to encode.
+        :param fontfile: path to font file
         :param int|None size: Size of matrix.
         :param bool|None compact: Compactness flag.
         """
@@ -575,7 +577,7 @@ class AztecCode(object):
                 line.append(' ')
             self.matrix.append(line)
 
-    def save(self, filename, module_size=1):
+    def save(self, filename, module_size=4):
         """Save matrix to image file.
 
         :param str filename: Output image filename.
@@ -595,7 +597,7 @@ class AztecCode(object):
                     (x * module_size, y * module_size,
                      x * module_size + module_size, y * module_size + module_size),
                     fill=(0, 0, 0) if self.matrix[y][x] == '#' else (255, 255, 255))
-        if self.my_font != None:
+        if self.my_font is not None:
             try:
                 image = self.add_text(image, self.data, module_size)
             except OSError as e:
@@ -869,12 +871,12 @@ class AztecCode(object):
             myfont = ImageFont.truetype(self.my_font,fontsize)
         # reduce the font size by 1 if the module size == 4
         # reality is anything smaller than 4 will not turn out as expected.
-        if module_size == 4:
-            fontsize -= 1
-            myfont = ImageFont.truetype(self.my_font,fontsize)
+        # if module_size <= 4:
+        #     fontsize -= 1
+        #     myfont = ImageFont.truetype(self.my_font,fontsize)
 
             #TODO redo the math on text placement and scaling
-            #pil likes to operate from the top left so I let run with it for now
+            #PIL likes to operate from the top left so I ran with it for now
         # create our new image and scale the height based on our new font size
         image = Image.new('RGB', (aztec_size[0]+10, (aztec_size[1]+5)+fontsize+10), 'white')
         new_image_size = image.size
@@ -913,7 +915,7 @@ def main():
     else:
         aztec_code.save('aztec_code.png', 4)
     print('Aztec Code info: {0}x{0} {1}'.format(aztec_code.size, '(compact)' if aztec_code.compact else ''))
-    print("To add text to the top of the aztec code simply add a font file:\naztec_code = AztecCode(data,fontfile='path/to/your/font.ttf')")
+    print("To add text to the top of the aztec code simply add a font file:\naztec_code = AztecCode(data, fontfile = 'path/to/your/font.ttf')")
 
 
 if __name__ == '__main__':

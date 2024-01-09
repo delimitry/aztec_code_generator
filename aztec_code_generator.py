@@ -179,7 +179,7 @@ def reed_solomon(wd, nd, nc, gf, pp):
     :param int nc: Number of error correction codewords.
     :param int gf: Galois Field order.
     :param int pp: Prime modulus polynomial value.
-    
+
     :return: None.
     """
     # generate log and anti log tables
@@ -242,19 +242,23 @@ def find_optimal_sequence(data):
                             # if changing from punct or digit to binary mode use U/L as intermediate mode
                             # TODO: update for digit
                             back_to[y] = 'upper'
-                            cur_seq[y] = cur_seq[x] + ['U/L', '%s/S' % y.upper()[0], 'size']
+                            cur_seq[y] = cur_seq[x] + \
+                                ['U/L', '%s/S' % y.upper()[0], 'size']
                         else:
                             back_to[y] = x
-                            cur_seq[y] = cur_seq[x] + ['%s/S' % y.upper()[0], 'size']
+                            cur_seq[y] = cur_seq[x] + \
+                                ['%s/S' % y.upper()[0], 'size']
                     else:
                         if cur_seq[x]:
                             # if changing from punct or digit mode - use U/L as intermediate mode
                             # TODO: update for digit
                             if x in ['punct', 'digit'] and y != 'upper':
-                                cur_seq[y] = cur_seq[x] + ['resume', 'U/L', '%s/L' % y.upper()[0]]
+                                cur_seq[y] = cur_seq[x] + \
+                                    ['resume', 'U/L', '%s/L' % y.upper()[0]]
                                 back_to[y] = y
                             elif x in ['upper', 'lower'] and y == 'punct':
-                                cur_seq[y] = cur_seq[x] + ['M/L', '%s/L' % y.upper()[0]]
+                                cur_seq[y] = cur_seq[x] + \
+                                    ['M/L', '%s/L' % y.upper()[0]]
                                 back_to[y] = y
                             elif x == 'mixed' and y != 'upper':
                                 if y == 'punct':
@@ -273,42 +277,54 @@ def find_optimal_sequence(data):
                                         cur_seq[y] = cur_seq[x] + ['resume']
                                     elif y == 'upper':
                                         if back_to[x] == 'lower':
-                                            cur_seq[y] = cur_seq[x] + ['resume', 'M/L', 'U/L']
+                                            cur_seq[y] = cur_seq[x] + \
+                                                ['resume', 'M/L', 'U/L']
                                         if back_to[x] == 'mixed':
-                                            cur_seq[y] = cur_seq[x] + ['resume', 'U/L']
+                                            cur_seq[y] = cur_seq[x] + \
+                                                ['resume', 'U/L']
                                         back_to[y] = 'upper'
                                     elif y == 'lower':
-                                        cur_seq[y] = cur_seq[x] + ['resume', 'L/L']
+                                        cur_seq[y] = cur_seq[x] + \
+                                            ['resume', 'L/L']
                                         back_to[y] = 'lower'
                                     elif y == 'mixed':
-                                        cur_seq[y] = cur_seq[x] + ['resume', 'M/L']
+                                        cur_seq[y] = cur_seq[x] + \
+                                            ['resume', 'M/L']
                                         back_to[y] = 'mixed'
                                     elif y == 'punct':
                                         if back_to[x] == 'mixed':
-                                            cur_seq[y] = cur_seq[x] + ['resume', 'P/L']
+                                            cur_seq[y] = cur_seq[x] + \
+                                                ['resume', 'P/L']
                                         else:
-                                            cur_seq[y] = cur_seq[x] + ['resume', 'M/L', 'P/L']
+                                            cur_seq[y] = cur_seq[x] + \
+                                                ['resume', 'M/L', 'P/L']
                                         back_to[y] = 'punct'
                                     elif y == 'digit':
                                         if back_to[x] == 'mixed':
-                                            cur_seq[y] = cur_seq[x] + ['resume', 'U/L', 'D/L']
+                                            cur_seq[y] = cur_seq[x] + \
+                                                ['resume', 'U/L', 'D/L']
                                         else:
-                                            cur_seq[y] = cur_seq[x] + ['resume', 'D/L']
+                                            cur_seq[y] = cur_seq[x] + \
+                                                ['resume', 'D/L']
                                         back_to[y] = 'digit'
                                 else:
-                                    cur_seq[y] = cur_seq[x] + ['resume', '%s/L' % y.upper()[0]]
+                                    cur_seq[y] = cur_seq[x] + \
+                                        ['resume', '%s/L' % y.upper()[0]]
                                     back_to[y] = y
                         else:
                             # if changing from punct or digit mode - use U/L as intermediate mode
                             # TODO: update for digit
                             if x in ['punct', 'digit']:
-                                cur_seq[y] = cur_seq[x] + ['U/L', '%s/L' % y.upper()[0]]
+                                cur_seq[y] = cur_seq[x] + \
+                                    ['U/L', '%s/L' % y.upper()[0]]
                                 back_to[y] = y
                             elif x in ['binary', 'upper', 'lower'] and y == 'punct':
-                                cur_seq[y] = cur_seq[x] + ['M/L', '%s/L' % y.upper()[0]]
+                                cur_seq[y] = cur_seq[x] + \
+                                    ['M/L', '%s/L' % y.upper()[0]]
                                 back_to[y] = y
                             else:
-                                cur_seq[y] = cur_seq[x] + ['%s/L' % y.upper()[0]]
+                                cur_seq[y] = cur_seq[x] + \
+                                    ['%s/L' % y.upper()[0]]
                                 back_to[y] = y
         next_len = {
             'upper': E, 'lower': E, 'mixed': E, 'punct': E, 'digit': E, 'binary': E
@@ -350,14 +366,16 @@ def find_optimal_sequence(data):
                 last_mode = ''
                 for char in cur_seq[x][::-1]:
                     if char.replace('/S', '').replace('/L', '') in abbr_modes:
-                        last_mode = abbr_modes.get(char.replace('/S', '').replace('/L', ''))
+                        last_mode = abbr_modes.get(
+                            char.replace('/S', '').replace('/L', ''))
                         break
                 if last_mode == 'punct':
                     # do not use mixed mode for '\r\n' as in mixed mode '\r' and '\n' are separate
                     if cur_seq[x][-1] + c in punct_2_chars and x != 'mixed':
                         if cur_len[x] < next_len[x]:
                             next_len[x] = cur_len[x]
-                            next_seq[x] = cur_seq[x][:-1] + [cur_seq[x][-1] + c]
+                            next_seq[x] = cur_seq[x][:-1] + \
+                                [cur_seq[x][-1] + c]
         if len(next_seq['binary']) - 2 == 32:
             next_len['binary'] += 11
         for i in modes:
@@ -475,7 +493,7 @@ def get_data_codewords(bits, codeword_size):
 
     :param str bits: Input data bits.
     :param int codeword_size: Codeword size in bits.
-    
+
     :return: Data codewords.
     """
     codewords = []
@@ -533,7 +551,7 @@ def find_suitable_matrix_size(data):
         ec_percent = 23  # recommended: 23% of symbol capacity plus 3 codewords
         # calculate minimum required number of bits
         required_bits_count = int(math.ceil(len(out_bits) * 100.0 / (
-                100 - ec_percent) + 3 * 100.0 / (100 - ec_percent)))
+            100 - ec_percent) + 3 * 100.0 / (100 - ec_percent)))
         if required_bits_count < bits:
             return size, compact
     raise Exception('Data too big to fit in one Aztec code!')
@@ -549,9 +567,9 @@ class AztecCode(object):
         If size and compact parameters are None (by default), an
         optimal size and compactness calculated based on the data.
         If you supply a fontfile the Aztec code will have text added to it
-        
+
         :param data: Data to encode.
-        :param fontfile: path to font file
+        :param fontfile: path to font file you wish to use /your/path/to/font.ttf
         :param int|None size: Size of matrix.
         :param bool|None compact: Compactness flag.
         """
@@ -589,7 +607,8 @@ class AztecCode(object):
             exc = missing_pil[0](missing_pil[1])
             exc.__traceback__ = missing_pil[2]
             raise exc
-        image = Image.new('RGB', (self.size * module_size, self.size * module_size), 'white')
+        image = Image.new('RGB', (self.size * module_size,
+                          self.size * module_size), 'white')
         image_draw = ImageDraw.Draw(image)
         for y in range(self.size):
             for x in range(self.size):
@@ -661,21 +680,27 @@ class AztecCode(object):
         """
         if self.compact:
             # for compact mode - 2 bits with layers count and 6 bits with data codewords count
-            mode_word = '{0:02b}{1:06b}'.format(layers_count - 1, data_cw_count - 1)
+            mode_word = '{0:02b}{1:06b}'.format(
+                layers_count - 1, data_cw_count - 1)
             # two 4 bits initial codewords with 5 Reed-Solomon check codewords
-            init_codewords = [int(mode_word[i:i + 4], 2) for i in range(0, 8, 4)]
+            init_codewords = [int(mode_word[i:i + 4], 2)
+                              for i in range(0, 8, 4)]
             total_cw_count = 7
         else:
             # for full mode - 5 bits with layers count and 11 bits with data codewords count
-            mode_word = '{0:05b}{1:011b}'.format(layers_count - 1, data_cw_count - 1)
+            mode_word = '{0:05b}{1:011b}'.format(
+                layers_count - 1, data_cw_count - 1)
             # four 4 bits initial codewords with 6 Reed-Solomon check codewords
-            init_codewords = [int(mode_word[i:i + 4], 2) for i in range(0, 16, 4)]
+            init_codewords = [int(mode_word[i:i + 4], 2)
+                              for i in range(0, 16, 4)]
             total_cw_count = 10
         # fill Reed-Solomon check codewords with zeros
         init_cw_count = len(init_codewords)
-        codewords = (init_codewords + [0] * (total_cw_count - init_cw_count))[:total_cw_count]
+        codewords = (init_codewords +
+                     [0] * (total_cw_count - init_cw_count))[:total_cw_count]
         # update Reed-Solomon check codewords using GF(16)
-        reed_solomon(codewords, init_cw_count, total_cw_count - init_cw_count, 16, polynomials[4])
+        reed_solomon(codewords, init_cw_count, total_cw_count -
+                     init_cw_count, 16, polynomials[4])
         return codewords
 
     def __add_mode_info(self, data_cw_count):
@@ -746,15 +771,18 @@ class AztecCode(object):
         ec_percent = 23  # recommended
         # calculate minimum required number of bits
         required_bits_count = int(math.ceil(len(out_bits) * 100.0 / (
-                100 - ec_percent) + 3 * 100.0 / (100 - ec_percent)))
+            100 - ec_percent) + 3 * 100.0 / (100 - ec_percent)))
         data_codewords = get_data_codewords(out_bits, cw_bits)
         if required_bits_count > bits:
-            raise Exception('Data too big to fit in Aztec code with current size!')
+            raise Exception(
+                'Data too big to fit in Aztec code with current size!')
 
         # add Reed-Solomon codewords to init data codewords
         data_cw_count = len(data_codewords)
-        codewords = (data_codewords + [0] * (cw_count - data_cw_count))[:cw_count]
-        reed_solomon(codewords, data_cw_count, cw_count - data_cw_count, 2 ** cw_bits, polynomials[cw_bits])
+        codewords = (data_codewords + [0] *
+                     (cw_count - data_cw_count))[:cw_count]
+        reed_solomon(codewords, data_cw_count, cw_count -
+                     data_cw_count, 2 ** cw_bits, polynomials[cw_bits])
 
         center = self.size // 2
         ring_radius = 5 if self.compact else 7
@@ -764,17 +792,23 @@ class AztecCode(object):
         layer_index = 0
         pos_x = center - ring_radius
         pos_y = center - ring_radius - 1
-        full_bits = ''.join(bin(cw)[2:].zfill(cw_bits) for cw in codewords)[::-1]
+        full_bits = ''.join(bin(cw)[2:].zfill(cw_bits)
+                            for cw in codewords)[::-1]
         for i in range(0, len(full_bits), 2):
             num += 1
-            max_num = ring_radius * 2 + layer_index * 4 + (4 if self.compact else 3)
-            bits_pair = ['#' if bit == '1' else ' ' for bit in full_bits[i:i + 2]]
+            max_num = ring_radius * 2 + layer_index * \
+                4 + (4 if self.compact else 3)
+            bits_pair = ['#' if bit ==
+                         '1' else ' ' for bit in full_bits[i:i + 2]]
             if layer_index >= layers_count:
-                raise Exception('Maximum layer count for current size is exceeded!')
+                raise Exception(
+                    'Maximum layer count for current size is exceeded!')
             if side == 'top':
                 # move right
-                dy0 = 1 if not self.compact and (center - pos_y) % 16 == 0 else 0
-                dy1 = 2 if not self.compact and (center - pos_y + 1) % 16 == 0 else 1
+                dy0 = 1 if not self.compact and (
+                    center - pos_y) % 16 == 0 else 0
+                dy1 = 2 if not self.compact and (
+                    center - pos_y + 1) % 16 == 0 else 1
                 self.matrix[pos_y - dy0][pos_x] = bits_pair[0]
                 self.matrix[pos_y - dy1][pos_x] = bits_pair[1]
                 pos_x += 1
@@ -790,8 +824,10 @@ class AztecCode(object):
                     pos_y += 1
             elif side == 'right':
                 # move down
-                dx0 = 1 if not self.compact and (center - pos_x) % 16 == 0 else 0
-                dx1 = 2 if not self.compact and (center - pos_x + 1) % 16 == 0 else 1
+                dx0 = 1 if not self.compact and (
+                    center - pos_x) % 16 == 0 else 0
+                dx1 = 2 if not self.compact and (
+                    center - pos_x + 1) % 16 == 0 else 1
                 self.matrix[pos_y][pos_x - dx0] = bits_pair[1]
                 self.matrix[pos_y][pos_x - dx1] = bits_pair[0]
                 pos_y += 1
@@ -809,8 +845,10 @@ class AztecCode(object):
                     pos_x -= 1
             elif side == 'bottom':
                 # move left
-                dy0 = 1 if not self.compact and (center - pos_y) % 16 == 0 else 0
-                dy1 = 2 if not self.compact and (center - pos_y + 1) % 16 == 0 else 1
+                dy0 = 1 if not self.compact and (
+                    center - pos_y) % 16 == 0 else 0
+                dy1 = 2 if not self.compact and (
+                    center - pos_y + 1) % 16 == 0 else 1
                 self.matrix[pos_y - dy0][pos_x] = bits_pair[1]
                 self.matrix[pos_y - dy1][pos_x] = bits_pair[0]
                 pos_x -= 1
@@ -828,8 +866,10 @@ class AztecCode(object):
                     pos_y -= 1
             elif side == 'left':
                 # move up
-                dx0 = 1 if not self.compact and (center - pos_x) % 16 == 0 else 0
-                dx1 = 2 if not self.compact and (center - pos_x - 1) % 16 == 0 else 1
+                dx0 = 1 if not self.compact and (
+                    center - pos_x) % 16 == 0 else 0
+                dx1 = 2 if not self.compact and (
+                    center - pos_x - 1) % 16 == 0 else 1
                 self.matrix[pos_y][pos_x + dx1] = bits_pair[0]
                 self.matrix[pos_y][pos_x + dx0] = bits_pair[1]
                 pos_y -= 1
@@ -850,48 +890,55 @@ class AztecCode(object):
         data_cw_count = self.__add_data(self.data)
         self.__add_mode_info(data_cw_count)
 
-    def add_text(self, img_obj, text, module_size = 4):
+    def add_text(self, img_obj, text, module_size=4):
         """
             this method will add a single line of text to the top
             of the aztec code. it is scaled to 90% of the area,
             smaller images such as module size 4 do not scale properly.(on the list to fix)
             However it is still functional.
+
+            :param img_obj data : the aztezcode image object after being populated with data
+            :param text : the txt to be added at the top of the generated image
+            :param module_size : this will determine the size of the aztec code default is 4
         """
         fontsize = 1
         img_fraction = .90
 
         aztec_size = img_obj.size
-        #temporary image to get base dimensions for new image
-        base = Image.new('RGB', (aztec_size[0]+10, (aztec_size[1]+5)+fontsize+10), 'black')
+        # temporary image to get base dimensions for new image
+        base = Image.new(
+            'RGB', (aztec_size[0]+10, (aztec_size[1]+5)+fontsize+10), 'black')
         new_image_size = base.size
-        myfont = ImageFont.truetype(self.my_font,fontsize)
-        #loop over font size and increase by 1 untill we reach 90% approximately
+        myfont = ImageFont.truetype(self.my_font, fontsize)
+        # loop over font size and increase by 1 untill we reach 90% approximately
         while myfont.getsize(text)[0] < img_fraction*base.size[0]:
             fontsize += 1
-            myfont = ImageFont.truetype(self.my_font,fontsize)
+            myfont = ImageFont.truetype(self.my_font, fontsize)
         # reduce the font size by 1 if the module size == 4
         # reality is anything smaller than 4 will not turn out as expected.
         # if module_size <= 4:
         #     fontsize -= 1
         #     myfont = ImageFont.truetype(self.my_font,fontsize)
 
-            #TODO redo the math on text placement and scaling
-            #PIL likes to operate from the top left so I ran with it for now
+            # TODO redo the math on text placement and scaling
+            # PIL likes to operate from the top left so I ran with it for now
         # create our new image and scale the height based on our new font size
-        image = Image.new('RGB', (aztec_size[0]+10, (aztec_size[1]+5)+fontsize+10), 'white')
+        image = Image.new(
+            'RGB', (aztec_size[0]+10, (aztec_size[1]+5)+fontsize+10), 'white')
         new_image_size = image.size
         draw = ImageDraw.Draw(image)
         # draw our text on our new image this math can be redone but its functional
-        draw.text((((aztec_size[0]/2+5)),(new_image_size[1] - aztec_size[1]-(fontsize/2)-15)),text, font=myfont, fill='black', anchor='mm')
-        #copy the aztec code and store it
+        draw.text((((aztec_size[0]/2+5)), (new_image_size[1] - aztec_size[1] -
+                  (fontsize/2)-15)), text, font=myfont, fill='black', anchor='mm')
+        # copy the aztec code and store it
         temp = img_obj.copy()
-        # simple math to place the aztec code at the bottom of our new image 
+        # simple math to place the aztec code at the bottom of our new image
         # with a 5px border on the sides and across the bottom
         w1 = (new_image_size[0] - aztec_size[0]-5)
         h1 = ((new_image_size[1]) - aztec_size[1]-5)
-        #paste the aztec code
-        image.paste(temp,(w1, h1))
-        #return our new image object
+        # paste the aztec code
+        image.paste(temp, (w1, h1))
+        # return our new image object
         return image
 
 
@@ -901,20 +948,21 @@ def main():
         module size 4 results in a 1.056 sq. in. or 76x76 pixel aztec code with out text
         with text it results in a W 1.194 x H 1.375 or 86x99 pixels aztec code.
         When using a font file if you see :
-        
+
         `cannot open resource`
-        
+
         check that the path to your font file is correct
     """
     data = 'Aztec Code 2D :)'
-    #aztec_code = AztecCode(data, fontfile='font/RobotoFlex-VariableFont_GRAD,XTRA,YOPQ,YTAS,YTDE,YTFI,YTLC,YTUC,opsz,slnt,wdth,wght.ttf')
-    aztec_code = AztecCode(data)
+    aztec_code = AztecCode(data, fontfile='font/RobotoFlex-VariableFont.ttf')
+    # aztec_code = AztecCode(data)
     aztec_code.print_out()
     if ImageDraw is None:
         print('PIL is not installed, cannot generate PNG')
     else:
         aztec_code.save('aztec_code.png', 4)
-    print('Aztec Code info: {0}x{0} {1}'.format(aztec_code.size, '(compact)' if aztec_code.compact else ''))
+    print('Aztec Code info: {0}x{0} {1}'.format(
+        aztec_code.size, '(compact)' if aztec_code.compact else ''))
     print("To add text to the top of the aztec code simply add a font file:\naztec_code = AztecCode(data, fontfile = 'path/to/your/font.ttf')")
 
 

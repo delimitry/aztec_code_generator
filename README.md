@@ -10,7 +10,9 @@ PIL - Python Imaging Library (or Pillow)
 ```python
 data = 'Aztec Code 2D :)'
 aztec_code = AztecCode(data)
-aztec_code.save('aztec_code.png', module_size=4)
+Add text:
+aztec_code = AztecCode(data, fontfile = 'path/to/your/font.ttf')
+aztec_code.save('aztec_code.png', module_size = 4)
 ```
 
 This code will generate an image file "aztec_code.png" with the Aztec Code that contains "Aztec Code 2D :)" text.

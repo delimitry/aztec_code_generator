@@ -2,8 +2,14 @@
 #-*- coding: utf-8 -*-
 
 import unittest
+from unittest.mock import patch, mock_open, MagicMock
 from aztec_code_generator import (
-    reed_solomon, find_optimal_sequence, optimal_sequence_to_bits, get_data_codewords,
+    reed_solomon,
+    find_optimal_sequence,
+    optimal_sequence_to_bits,
+    get_data_codewords,
+    SvgFactory,
+    AztecCode,
 )
 
 
@@ -86,6 +92,71 @@ class Test(unittest.TestCase):
         self.assertEqual(get_data_codewords('000000', 6), [0b000001, 0b011111])
         self.assertEqual(get_data_codewords('111111', 6), [0b111110, 0b111110])
         self.assertEqual(get_data_codewords('111101111101', 6), [0b111101, 0b111101])
+
+class TestSvgFactory(unittest.TestCase):
+    def test_init(self):
+        data = '<svg><text>example svg data</text></svg>'
+        instance = SvgFactory(data)
+        self.assertEqual(instance.svg_str, data)
+    
+    @patch('builtins.open', new_callable=mock_open)
+    def test_save(self, mock):
+        data = '<svg></svg>'
+        filename = 'example_filename.svg'
+        instance = SvgFactory(data)
+        mock.reset_mock()
+        instance.save(filename)
+        mock.assert_called_once_with(filename, "w")
+        mock().write.assert_called_once_with(data)
+
+    def test_create_svg(self):
+        CASES = [
+            dict(
+                matrix = [['#','#','#'], [' ',' ',' '], ['#','#','#']],
+                snapshot = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 5 5"><rect x="0" y="0" width="5" height="5" fill="white" /><path d="M1 1 h3 M1 3 h3 Z" stroke="black" stroke-width="1" style="transform:translateY(0.5px);" /></svg>',
+            ),
+            dict(
+                matrix = [['#',' ',' '], [' ','#',' '], [' ',' ','#']],
+                snapshot = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 5 5"><rect x="0" y="0" width="5" height="5" fill="white" /><path d="M1 1 h1 M2 2 h1 M3 3 h1 Z" stroke="black" stroke-width="1" style="transform:translateY(0.5px);" /></svg>',
+            ),
+            dict(
+                matrix = [['#',' '], [' ','#']],
+                snapshot = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 4 4"><rect x="0" y="0" width="4" height="4" fill="white" /><path d="M1 1 h1 M2 2 h1 Z" stroke="black" stroke-width="1" style="transform:translateY(0.5px);" /></svg>'
+            ),
+            dict(
+                matrix = [['#',' '], [' ','#']],
+                border = 3,
+                snapshot = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 8 8"><rect x="0" y="0" width="8" height="8" fill="white" /><path d="M3 3 h1 M4 4 h1 Z" stroke="black" stroke-width="1" style="transform:translateY(0.5px);" /></svg>'
+            ),
+            dict(
+                matrix = [[1,0], [0,1]],
+                matching_fn = lambda x: x == 1,
+                snapshot = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 4 4"><rect x="0" y="0" width="4" height="4" fill="white" /><path d="M1 1 h1 M2 2 h1 Z" stroke="black" stroke-width="1" style="transform:translateY(0.5px);" /></svg>'
+            ),
+        ]
+        for case in CASES:
+            if "border" in case:
+                instance = SvgFactory.create_svg(case["matrix"], border=case["border"])
+            elif "matching_fn" in case:
+                instance = SvgFactory.create_svg(case["matrix"], matching_fn=case["matching_fn"])
+            else:
+                instance = SvgFactory.create_svg(case["matrix"])
+            self.assertIsInstance(instance, SvgFactory)
+            self.assertEqual(
+                instance.svg_str,
+                case["snapshot"],
+                'should match snapshot'
+            )
+
+class TestAztecCode(unittest.TestCase):
+    def test_save_should_support_svg(self):
+        """ Should call SvgFactory.save if file extension ends with .svg """
+        mock_svg_factory_save = MagicMock()
+        SvgFactory.save = mock_svg_factory_save
+        aztec_code = AztecCode('example data')
+        filename = 'file.svg'
+        aztec_code.save(filename)
+        mock_svg_factory_save.assert_called_once_with(filename)
 
 
 if __name__ == '__main__':

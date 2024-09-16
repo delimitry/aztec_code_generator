@@ -539,6 +539,50 @@ def find_suitable_matrix_size(data):
     raise Exception('Data too big to fit in one Aztec code!')
 
 
+class SvgFactory:
+    def __init__(self, data):
+        """ Do not call it directly, use the create_svg method instead
+
+        :param data: String representation of the image
+        """
+        self.svg_str = data
+
+    @staticmethod
+    def create_svg(matrix, border=1, matching_fn=lambda x: x == '#'):
+        """ Creates the image in SVG format based on the two dimensional array
+
+        :param matrix: Two dimensional array of data
+        :param border: Border width (px)
+        :param matching_fn: Function to differenciate ones from zeros in the matrix
+        :return: An instance of SvgFactory
+        """
+        d = ''
+        for y, line in enumerate(matrix):
+            dx = 0
+            x0 = None
+            for x, char in enumerate(line):
+                if matching_fn(char):
+                    dx += 1
+                    if x0 is None:
+                        x0 = x
+                if x0 is not None and (x + 1 >= len(line) or not matching_fn(line[x + 1])):
+                    d += f" M{x0 + border} {y + border} h{dx}"
+                    dx = 0
+                    x0 = None
+        size = len(matrix[0]) + (2 * border)
+        data = f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {size} {size}"><rect x="0" y="0" width="{size}" height="{size}" fill="white" /><path d="{d[1:]} Z" stroke="black" stroke-width="1" style="transform:translateY(0.5px);" /></svg>'
+        return SvgFactory(data)
+
+    def save(self, filename):
+        """ Save SVG to image file
+
+        :param filename: output image filename
+        :return: None
+        """
+        with open(filename, 'w') as file:
+            file.write(self.svg_str)
+
+
 class AztecCode(object):
     """
     Aztec code generator.
@@ -582,6 +626,10 @@ class AztecCode(object):
 
         :return: None.
         """
+        if filename.lower().endswith('.svg'):
+            image = SvgFactory.create_svg(self.matrix)
+            image.save(filename)
+            return
         if ImageDraw is None:
             exc = missing_pil[0](missing_pil[1])
             exc.__traceback__ = missing_pil[2]
@@ -849,6 +897,7 @@ def main():
         print('PIL is not installed, cannot generate PNG')
     else:
         aztec_code.save('aztec_code.png', 4)
+        aztec_code.save('aztec_code.svg')
     print('Aztec Code info: {0}x{0} {1}'.format(aztec_code.size, '(compact)' if aztec_code.compact else ''))
 
 
